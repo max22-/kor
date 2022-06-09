@@ -10,13 +10,13 @@ void kor_fatal();
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
-typedef signed char s8;
-typedef signed short s16;
-typedef signed int s32;
+typedef signed char i8;
+typedef signed short i16;
+typedef signed int i32;
 
 typedef struct {
   u32 dat[KOR_STACK_SIZE];
-  u32 ptr;
+  i32 ptr;
 } kor_stack;
 
 typedef struct {
@@ -71,6 +71,23 @@ enum kor_modes {
   mode_relative = 0
 };
 
+#define KOR_INTERRUPTS				\
+  X(DIV_BY_ZERO)				\
+    X(WST_UNDERFLOW)				\
+    X(WST_OVERFLOW)				\
+    X(RST_UNDERFLOW)				\
+    X(RST_OVERFLOW)				\
+    X(MEMORY_ACCESS_ERROR)			\
+    X(INVALID_INSTRUCTION)
+    
+enum kor_interrupts {
+#define X(x) x,
+  KOR_INTERRUPTS
+#undef X
+  INTERRUPTS_COUNT
+};
+
 void kor_boot(kor*);
 void kor_load(kor *, u8 *src, u32 size);
+void kor_interrupt(kor *vm, int n);
 void kor_start(kor*);
