@@ -91,38 +91,83 @@ void kor_interrupt(kor *vm, int n)
     kor_print("interrupt: ");
     kor_print(kor_interrupt_name[n]);
     kor_print("\n");
-}
+  }
   else
     kor_eprint("unknown interrupt\n");
-  
+  kor_fatal(); /* there are only error handling exceptions for the moment */
 }
 
-#define fetch_byte(vm, x)						\
+#define fetch_byte(x, a)						\
   do {									\
-    iassert(vm->pc < KOR_MEM_SIZE, vm, MEMORY_ACCESS_ERROR);		\
-    x = vm->mem[vm->pc++];						\
+    iassert(a < KOR_MEM_SIZE, vm, MEMORY_ACCESS_ERROR);			\
+    x = vm->mem[a];							\
   }									\
   while(0)
+
+#define fetch_short(x, a)						\
+  do {									\
+    iassert(a < KOR_MEM_SIZE - 1, vm, MEMORY_ACCESS_ERROR);		\
+    x = vm->mem[a];							\
+    x |= vm->mem[a+1] << 8;						\
+  } while(0)
+
+#define fetch_word(x, a)						\
+  do {									\
+    iassert(a < KOR_MEM_SIZE - 3, vm, MEMORY_ACCESS_ERROR);		\
+    x = vm->mem[a];							\
+    x |= vm->mem[a+1] << 8;						\
+    x |= vm->mem[a+2] << 16;						\
+    x |= vm->mem[a+3] << 24;						\
+  } while(0)
+
+#define store_byte(x, a)					\
+  do {								\
+    iassert(a < KOR_MEM_SIZE, vm, MEMORY_ACCESS_ERROR);		\
+    vm->mem[a] = x;						\
+  } while(0)
+
+#define store_short(x, a)				\
+  do {							\
+    iassert(a < KOR_MEM_SIZE - 1, vm, MEMORY_ACCESS_ERROR);	\
+    vm->mem[a] = x & 0xff;				\
+    vm->mem[a+1] = (x & 0xff00) >> 8;			\
+  } while(0)
+
+#define store_word(x, a)					\
+  do {								\
+    iassert(a < KOR_MEM_SIZE - 3, vm, MEMORY_ACCESS_ERROR);	\
+    vm->mem[a] = x & 0xff;					\
+    vm->mem[a+1] = (x & 0xff00) >> 8;				\
+    vm->mem[a+2] = (x & 0xff0000) >> 16;			\
+    vm->mem[a+3] = (x & 0xff000000) >> 24;			\
+  } while(0)
 
 void kor_start(kor *vm)
 {
   u8 opcode = nop, op = nop, mode = 0;
   u32 a, b, c;
+  i32 sb; /* signed b */
   while(op != halt) {
-    fetch_byte(vm, opcode);
+    fetch_byte(opcode, vm->pc);
+    vm->pc++;
     op = opcode & 0x1f;
     mode = opcode &0xe0;
     switch(op) {
     case nop:
       break;
     case lit:
-      /*if(mode == mode_byte)
-	kor_print("byte\n");
-      else if(mode == mode_short)
-	kor_print("short\n");
-      else if(mode == mode_word)
-      kor_print("word\n");*/
-      fetch_byte(vm, a);
+      if(mode == mode_byte) {
+	fetch_byte(a, vm->pc);
+	vm->pc++;
+      }
+      else if(mode == mode_short) {
+	fetch_short(a, vm->pc);
+	vm->pc += 2;
+      }
+      else if(mode == mode_word) {
+	fetch_word(a, vm->pc);
+	vm->pc += 4;
+      }
       push(vm, a);
       break;
     case dup:
@@ -180,6 +225,65 @@ void kor_start(kor *vm)
       if(a)
 	vm->pc = rpop(vm);
       break;
+    case jmp:
+      vm->pc = pop(vm);
+      break;
+    case cjmp:
+      b = pop(vm);
+      a = pop(vm);
+      if(a)
+	vm->pc = b;
+      break;
+    case wtr:
+      rpush(vm, pop(vm));
+      break;
+    case rtw:
+      push(vm, rpop(vm));
+      break;
+      
+    case eq:
+      b = pop(vm);
+      a = pop(vm);
+      push(vm, a == b);
+      break;
+    case neq:
+      b = pop(vm);
+      a = pop(vm);
+      push(vm, a != b);
+      break;
+    case lt:
+      b = pop(vm);
+      a = pop(vm);
+      push(vm, a < b);
+      break;
+    case gt:
+      b = pop(vm);
+      a = pop(vm);
+      push(vm, a > b);
+      break;
+    case and:
+      b = pop(vm);
+      a = pop(vm);
+      push(vm, a & b);
+      break;
+    case or:
+      b = pop(vm);
+      a = pop(vm);
+      push(vm, a | b);
+      break;
+    case xor:
+      b = pop(vm);
+      a = pop(vm);
+      push(vm, a ^ b);
+      break;
+    case shift:
+      sb = pop(vm);
+      a = pop(vm);
+      if(sb >= 0)
+	push(vm, a << sb);
+      else
+	push(vm, a >> (-sb));
+      break;
     
     case add:
       b = pop(vm);
@@ -203,6 +307,7 @@ void kor_start(kor *vm)
       push(vm, a % b);
       push(vm, a / b);
       break;
+      
     case trap:
       b = pop(vm);
       if(b == 1) {

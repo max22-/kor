@@ -67,8 +67,8 @@ enum kor_opcodes {
 };
 
 enum kor_modes {
-  mode_byte = 0, mode_short = 1<<5, mode_word = 2<<5,
-  mode_relative = 0
+  mode_byte = 0, mode_short = 1<<5, mode_word = 1<<6,
+  mode_relative = 1 << 7
 };
 
 #define KOR_INTERRUPTS				\
