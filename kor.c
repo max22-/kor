@@ -144,27 +144,28 @@ void kor_interrupt(kor *vm, int n)
 
 void kor_start(kor *vm)
 {
-  u8 opcode = nop, op = nop, mode = 0;
+  u8 opcode = nop, op = nop, operand_size, rel;
   u32 a, b, c;
   i32 sb; /* signed b */
-  while(op != halt) {
+  while(1) {
     fetch_byte(opcode, vm->pc);
     vm->pc++;
     op = opcode & 0x1f;
-    mode = opcode &0xe0;
+    operand_size = opcode & 0x60;
+    rel = opcode & 0x80;
     switch(op) {
     case nop:
       break;
     case lit:
-      if(mode == mode_byte) {
+      if(operand_size == mode_byte) {
 	fetch_byte(a, vm->pc);
 	vm->pc++;
       }
-      else if(mode == mode_short) {
+      else if(operand_size == mode_short) {
 	fetch_short(a, vm->pc);
 	vm->pc += 2;
       }
-      else if(mode == mode_word) {
+      else if(operand_size == mode_word) {
 	fetch_word(a, vm->pc);
 	vm->pc += 4;
       }
@@ -307,14 +308,33 @@ void kor_start(kor *vm)
       push(vm, a % b);
       push(vm, a / b);
       break;
-      
+    case sext:
+      b = pop(vm);
+      if(operand_size == mode_byte) {
+	if(b & 0x80)
+	  b |= 0xffffff00;
+      } else if (operand_size == mode_short) {
+	if(b & 0x8000)
+	  b |= 0xffff0000;
+      }
+      else kor_interrupt(vm, INVALID_INSTRUCTION);
+      push(vm, b);
+      break;
     case trap:
       b = pop(vm);
-      if(b == 1) {
+      switch(b) {
+      case 0:
+	a = pop(vm);
+	kor_halt(a);
+	break;
+      case 1:
 	a = pop(vm);
 	kor_putc(a);
+	break;
+      default:
+	kor_interrupt(vm, INVALID_TRAP);
+	break;
       }
-    case halt:
       break;
     default:
       kor_interrupt(vm, INVALID_INSTRUCTION);

@@ -1,5 +1,6 @@
 /* User provided functions */
 void kor_putc(char);
+void kor_halt();
 void kor_print(const char*);
 void kor_eprint(const char*);
 void kor_fatal();
@@ -56,8 +57,8 @@ typedef struct {
     X(divmod)					\
   X(fetch)					\
   X(store)					\
-  X(trap)					\
-  X(halt)
+  X(sext)					\
+  X(trap)					
 
 enum kor_opcodes {
 #define X(x) x,
@@ -66,7 +67,7 @@ enum kor_opcodes {
   KOR_OPCODES_COUNT
 };
 
-enum kor_modes {
+enum kor_mode {
   mode_byte = 0, mode_short = 1<<5, mode_word = 1<<6,
   mode_relative = 1 << 7
 };
@@ -78,7 +79,8 @@ enum kor_modes {
     X(RST_UNDERFLOW)				\
     X(RST_OVERFLOW)				\
     X(MEMORY_ACCESS_ERROR)			\
-    X(INVALID_INSTRUCTION)
+    X(INVALID_INSTRUCTION)			\
+    X(INVALID_TRAP)
     
 enum kor_interrupts {
 #define X(x) x,
