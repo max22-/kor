@@ -1,11 +1,3 @@
-/* User provided functions */
-void kor_putc(char);
-void kor_halt();
-void kor_print(const char*);
-void kor_eprint(const char*);
-void kor_fatal();
-/* *********************** */
-
 #define KOR_MEM_SIZE 65536
 #define KOR_STACK_SIZE 256
 typedef unsigned char u8;
@@ -96,3 +88,11 @@ void kor_load(kor *, u8 *src, u32 size);
 void kor_interrupt(kor *vm, int n);
 void kor_exec(kor*, u32 limit);
 void kor_run(kor*);
+
+/* User provided functions */
+void kor_putc(kor*);
+void kor_halt(kor*);
+void kor_print(const char*);
+void kor_eprint(const char*);
+void kor_fatal();
+/* *********************** */

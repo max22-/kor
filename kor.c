@@ -344,12 +344,10 @@ void kor_exec(kor *vm, u32 limit)
       POP(b);
       switch(b) {
       case 0:
-	POP(a);
-	kor_halt(a);
+	kor_halt(vm);
 	break;
       case 1:
-	POP(a);
-	kor_putc(a);
+	kor_putc(vm);
 	break;
       default:
 	kor_interrupt(vm, INVALID_TRAP);

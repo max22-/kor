@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include "kor.h"
 
-void kor_putc(char c)
+void kor_putc(kor* vm)
 {
-  putchar(c);
+  putchar(kor_pop(vm));
 }
 
-void kor_halt(u32 c)
+void kor_halt(kor *vm)
 {
-  exit(c);
+  exit(kor_pop(vm));
 }
 
 void kor_print(const char *msg)
