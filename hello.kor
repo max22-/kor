@@ -5,6 +5,7 @@ org 10
 ( : define label )
 ( ' byte mode )
 ( '' short mode )
+( .x raw hex )
 
 &> msg
 : loop
