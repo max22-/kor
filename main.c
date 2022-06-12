@@ -30,6 +30,7 @@ void kor_fatal()
 int main(int argc, char *argv[])
 {
   kor vm;
+  FILE *f;
   u8 image[] = {
     lit | mode_short, 45, 00, lit, 53, add, lit, 1, trap,
     lit, 0x0a, lit, 1, trap,
@@ -47,10 +48,21 @@ int main(int argc, char *argv[])
     lit, 0x0a, lit, 1, trap, ret
     
   };
+  if(argc < 2) {
+    kor_eprint("usage: kor file.img\n");
+    return 1;
+  }
   kor_print("Kor VM\n");
-  kor_print("Booting...\n");
+  kor_print("booting...\n");
   kor_boot(&vm);
-  kor_load(&vm, image2, sizeof(image2));
+  kor_print("loading image...\n");
+  f = fopen(argv[1], "r");
+  if(!f) {
+    kor_eprint("error: image not found\n");
+    return 1;
+  }
+  fread(vm.mem, sizeof(vm.mem), 1, f);
+  fclose(f);
   kor_run(&vm);
   return 0;
 }

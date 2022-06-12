@@ -86,7 +86,7 @@ void kor_boot(kor *vm)
     ptr[i] = 0;
 }
 
-void kor_load(kor *vm, u8 *src, u32 size)
+void kor_load_from_mem(kor *vm, u8 *src, u32 size)
 {
   u32 i;
   for(i = 0; i < size; i++)
@@ -327,6 +327,20 @@ void kor_exec(kor *vm, u32 limit)
       POP(a);
       PUSH(a % b);
       PUSH(a / b);
+      break;
+    case fetch:
+      POP(a);
+      if(operand_size == mode_byte)
+	fetch_byte(b, a);
+      else if(operand_size == mode_short)
+	fetch_short(b, a);
+      else if(operand_size == mode_word)
+	fetch_word(b, a);
+      else { kor_interrupt(vm, INVALID_INSTRUCTION); break; }
+      PUSH(b);
+      break;
+    case store:
+#warning not implemented (oversight...)
       break;
     case sext:
       POP(b);

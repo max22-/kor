@@ -60,7 +60,7 @@ enum kor_opcodes {
 };
 
 enum kor_mode {
-  mode_byte = 0, mode_short = 1<<5, mode_word = 1<<6,
+  mode_byte = 1 << 5, mode_short = 1 << 6, mode_word = 0,
   mode_relative = 1 << 7
 };
 
@@ -84,7 +84,7 @@ enum kor_interrupts {
 void kor_push(kor*, u32);
 u32 kor_pop();
 void kor_boot(kor*);
-void kor_load(kor *, u8 *src, u32 size);
+void kor_load_from_mem(kor *, u8 *src, u32 size);
 void kor_interrupt(kor *vm, int n);
 void kor_exec(kor*, u32 limit);
 void kor_run(kor*);
