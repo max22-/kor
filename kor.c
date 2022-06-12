@@ -80,7 +80,7 @@ void kor_boot(kor *vm)
   u8 *ptr = (u8*)vm;
   kassert(sizeof(u8) == 1, "sizeof(u8) should be 1");
   kassert(sizeof(u16) == 2, "sizeof(u16) should be 2");
-  kassert(sizeof(u32) == 4, "sizeof(u16) should be 4");
+  kassert(sizeof(u32) == 4, "sizeof(u32) should be 4");
   kassert(KOR_OPCODES_COUNT == 32, "OPCODES_COUNT should be 32");
   for(i = 0; i < sizeof(kor); i++)
     ptr[i] = 0;
