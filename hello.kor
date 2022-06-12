@@ -17,4 +17,4 @@ dup fetch ' dup 0 eq &> end cjmp
 : end
 0 0 trap
 
-: msg " Hello, .x 20 " world! .x 0
+: msg " Hello, .x 20 " world! .x a .x 0
