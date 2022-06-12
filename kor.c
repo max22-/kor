@@ -126,11 +126,11 @@ void kor_interrupt(kor *vm, int n)
     vm->mem[a] = x;						\
   } while(0)
 
-#define store_short(x, a)				\
-  do {							\
+#define store_short(x, a)					\
+  do {								\
     iassert(a < KOR_MEM_SIZE - 1, vm, MEMORY_ACCESS_ERROR);	\
-    vm->mem[a] = x & 0xff;				\
-    vm->mem[a+1] = (x & 0xff00) >> 8;			\
+    vm->mem[a] = x & 0xff;					\
+    vm->mem[a+1] = (x & 0xff00) >> 8;				\
   } while(0)
 
 #define store_word(x, a)					\
@@ -142,18 +142,19 @@ void kor_interrupt(kor *vm, int n)
     vm->mem[a+3] = (x & 0xff000000) >> 24;			\
   } while(0)
 
-void kor_start(kor *vm)
+void kor_exec(kor *vm, u32 limit)
 {
   u8 opcode = nop, op = nop, operand_size, rel;
   u32 a, b, c;
-  i32 sb; /* signed b */
-  while(1) {
+  i32 sb;
+  while(limit--) {
     fetch_byte(opcode, vm->pc);
     vm->pc++;
     op = opcode & 0x1f;
     operand_size = opcode & 0x60;
     rel = opcode & 0x80;
     switch(op) {
+      
     case nop:
       break;
     case lit:
@@ -208,14 +209,16 @@ void kor_start(kor *vm)
 
     case call:
       rpush(vm, vm->pc);
-      vm->pc = pop(vm);
+      if(rel) vm->pc += pop(vm);
+      else vm->pc = pop(vm);
       break;
     case ccall:
       b = pop(vm);
       a = pop(vm);
       if(a) {
 	rpush(vm, vm->pc);
-	vm->pc = a;
+	if(rel) vm->pc += a;
+	else vm->pc = a;
       }
       break;
     case ret:
@@ -227,13 +230,16 @@ void kor_start(kor *vm)
 	vm->pc = rpop(vm);
       break;
     case jmp:
-      vm->pc = pop(vm);
+      if(rel) vm->pc += pop(vm);
+      else vm->pc = pop(vm);
       break;
     case cjmp:
       b = pop(vm);
       a = pop(vm);
-      if(a)
-	vm->pc = b;
+      if(a) {
+	if(rel) vm->pc += b;
+	else vm->pc = b;
+      }
       break;
     case wtr:
       rpush(vm, pop(vm));
@@ -341,4 +347,10 @@ void kor_start(kor *vm)
       break;
     }
   }
+}
+
+void kor_run(kor *vm)
+{
+  while(1)
+    kor_exec(vm, 0xffffffff);
 }

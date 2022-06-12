@@ -51,6 +51,6 @@ int main(int argc, char *argv[])
   kor_print("Booting...\n");
   kor_boot(&vm);
   kor_load(&vm, image2, sizeof(image2));
-  kor_start(&vm);
+  kor_run(&vm);
   return 0;
 }
