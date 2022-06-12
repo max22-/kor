@@ -31,23 +31,6 @@ int main(int argc, char *argv[])
 {
   kor vm;
   FILE *f;
-  u8 image[] = {
-    lit | mode_short, 45, 00, lit, 53, add, lit, 1, trap,
-    lit, 0x0a, lit, 1, trap,
-    lit, 1, lit, 0, divmod, drop, drop,
-    lit, 0, lit, 0, trap /* halt */
-  };
-  u8 image2[] = {
-    lit, 16, call,
-    lit, 98, lit, 1, trap,
-    lit, 22, call,
-    lit, 0, lit, 0, trap, /* halt */
-    /* 16: */
-    lit, 97, lit, 1, trap, ret,
-    /* newline */
-    lit, 0x0a, lit, 1, trap, ret
-    
-  };
   if(argc < 2) {
     kor_eprint("usage: kor file.img\n");
     return 1;
