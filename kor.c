@@ -42,29 +42,37 @@ static char *kor_interrupt_name[] = {
 #undef X
 };
 
-static void push(kor *vm, u32 x)
+void kor_push(kor *vm, u32 x)
 {
   iassert(vm->wst.ptr < KOR_STACK_SIZE, vm, WST_OVERFLOW);
   vm->wst.dat[vm->wst.ptr++] = x;
 }
 
-static u32 pop(kor *vm)
+#define PUSH(x) kor_push(vm, x)
+
+u32 kor_pop(kor *vm)
 {
   iassert(vm->wst.ptr > 0, vm, WST_UNDERFLOW);
   return vm->wst.dat[--vm->wst.ptr];
 }
 
-static void rpush(kor *vm, u32 x)
+#define POP(x) do { x = kor_pop(vm); } while (0)
+
+static void kor_rpush(kor *vm, u32 x)
 {
   iassert(vm->rst.ptr < KOR_STACK_SIZE, vm, RST_OVERFLOW);
   vm->rst.dat[vm->rst.ptr++] = x;
 }
 
-static u32 rpop(kor *vm)
+#define RPUSH(x) kor_rpush(vm, x)
+
+static u32 kor_rpop(kor *vm)
 {
   iassert(vm->rst.ptr > 0, vm, RST_UNDERFLOW);
   return vm->rst.dat[--vm->rst.ptr];
 }
+
+#define RPOP(x) do { x = kor_rpop(vm); } while(0)
 
 void kor_boot(kor *vm)
 {
@@ -170,152 +178,158 @@ void kor_exec(kor *vm, u32 limit)
 	fetch_word(a, vm->pc);
 	vm->pc += 4;
       }
-      push(vm, a);
+      PUSH(a);
       break;
     case dup:
-      a = pop(vm);
-      push(vm, a);
-      push(vm, a);
+      POP(a);
+      PUSH(a);
+      PUSH(a);
       break;
     case drop:
-      pop(vm);
+      POP(a);
       break;
     case swap:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, b);
-      push(vm, a);
+      POP(b);
+      POP(a);
+      PUSH(b);
+      PUSH(a);
       break;
     case over:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a);
-      push(vm, b);
-      push(vm, a);
+      POP(b);
+      POP(a);
+      PUSH(a);
+      PUSH(b);
+      PUSH(a);
       break;
     case rot:
-      c = pop(vm);
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, b);
-      push(vm, c);
-      push(vm, a);
+      POP(c);
+      POP(b);
+      POP(a);
+      PUSH(b);
+      PUSH(c);
+      PUSH(a);
       break;
     case nip:
-      b = pop(vm);
-      pop(vm);
-      push(vm, b);
+      POP(b);
+      POP(a);
+      PUSH(b);
       break;
 
     case call:
-      rpush(vm, vm->pc);
-      if(rel) vm->pc += pop(vm);
-      else vm->pc = pop(vm);
+      RPUSH(vm->pc);
+      POP(a);
+      if(rel) vm->pc += a;
+      else vm->pc = a;
       break;
     case ccall:
-      b = pop(vm);
-      a = pop(vm);
+      POP(b);
+      POP(a);
       if(a) {
-	rpush(vm, vm->pc);
-	if(rel) vm->pc += a;
-	else vm->pc = a;
+	RPUSH(vm->pc);
+	if(rel) vm->pc += b;
+	else vm->pc = b;
       }
       break;
     case ret:
-      vm->pc = rpop(vm);
+      RPOP(vm->pc);
       break;
     case cret:
-      a = pop(vm);
-      if(a)
-	vm->pc = rpop(vm);
+      POP(a);
+      if(a) {
+	RPOP(a);
+	vm->pc = a;
+      }
       break;
     case jmp:
-      if(rel) vm->pc += pop(vm);
-      else vm->pc = pop(vm);
+      POP(a);
+      if(rel) vm->pc += a;
+      else vm->pc = a;
       break;
     case cjmp:
-      b = pop(vm);
-      a = pop(vm);
+      POP(b);
+      POP(a);
       if(a) {
 	if(rel) vm->pc += b;
 	else vm->pc = b;
       }
       break;
     case wtr:
-      rpush(vm, pop(vm));
+      POP(a);
+      RPUSH(a);
       break;
     case rtw:
-      push(vm, rpop(vm));
+      RPOP(a);
+      PUSH(a);
       break;
       
     case eq:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a == b);
+      POP(b);
+      POP(a);
+      PUSH(a == b);
       break;
     case neq:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a != b);
+      POP(b);
+      POP(a);
+      PUSH(a != b);
       break;
     case lt:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a < b);
+      POP(b);
+      POP(a);
+      PUSH(a < b);
       break;
     case gt:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a > b);
+      POP(b);
+      POP(a);
+      PUSH(a > b);
       break;
     case and:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a & b);
+      POP(b);
+      POP(a);
+      PUSH(a & b);
       break;
     case or:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a | b);
+      POP(b);
+      POP(a);
+      PUSH(a | b);
       break;
     case xor:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a ^ b);
+      POP(b);
+      POP(a);
+      PUSH(a ^ b);
       break;
     case shift:
-      sb = pop(vm);
-      a = pop(vm);
+      POP(sb);
+      POP(a);
       if(sb >= 0)
-	push(vm, a << sb);
+	PUSH(a << sb);
       else
-	push(vm, a >> (-sb));
+	PUSH(a >> (-sb));
       break;
     
     case add:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a + b);
+      POP(b);
+      POP(a);
+      PUSH(a + b);
       break;
     case sub:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a - b);
+      POP(b);
+      POP(a);
+      PUSH(a - b);
       break;
     case mul:
-      b = pop(vm);
-      a = pop(vm);
-      push(vm, a * b);
+      POP(b);
+      POP(a);
+      PUSH(a * b);
       break;
     case divmod:
-      b = pop(vm);
+      POP(b);
       iassert(b != 0, vm, DIV_BY_ZERO);
-      a = pop(vm);
-      push(vm, a % b);
-      push(vm, a / b);
+      POP(a);
+      PUSH(a % b);
+      PUSH(a / b);
       break;
     case sext:
-      b = pop(vm);
+      POP(b);
       if(operand_size == mode_byte) {
 	if(b & 0x80)
 	  b |= 0xffffff00;
@@ -324,17 +338,17 @@ void kor_exec(kor *vm, u32 limit)
 	  b |= 0xffff0000;
       }
       else kor_interrupt(vm, INVALID_INSTRUCTION);
-      push(vm, b);
+      PUSH(b);
       break;
     case trap:
-      b = pop(vm);
+      POP(b);
       switch(b) {
       case 0:
-	a = pop(vm);
+	POP(a);
 	kor_halt(a);
 	break;
       case 1:
-	a = pop(vm);
+	POP(a);
 	kor_putc(a);
 	break;
       default:

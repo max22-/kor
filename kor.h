@@ -89,6 +89,8 @@ enum kor_interrupts {
   INTERRUPTS_COUNT
 };
 
+void kor_push(kor*, u32);
+u32 kor_pop();
 void kor_boot(kor*);
 void kor_load(kor *, u8 *src, u32 size);
 void kor_interrupt(kor *vm, int n);
