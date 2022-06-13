@@ -95,4 +95,4 @@ for r in refs.keys():
         write_word(a, labels[r])
 
 with open('output.img', 'wb') as f:
-    f.write(image)
+    f.write(image[0:image_size])
