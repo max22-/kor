@@ -46,10 +46,10 @@ while i < len(words):
     elif words[i] == ':':
         labels[words[i+1]] = here
         i += 2
-    elif words[i] == '&>':
+    elif words[i] == '@':
         image[here] = opcodes.index("lit")
         here += 1
-        refs[words[i+1]] = here
+        refs.setdefault(words[i+1], []).append(here)
         here += 4
         i += 2
     elif words[i] in opcodes:
@@ -71,8 +71,8 @@ while i < len(words):
         image[here] = int(words[i+1], 16)
         here += 1
         i += 2
-    elif is_hex(words[i]):
-        v = int(words[i], 16)
+    elif words[i] == '#':
+        v = int(words[i+1], 16)
         if v < 256:
             image[here] = opcodes.index("lit") | 1 << 5
             here += 1
@@ -80,10 +80,10 @@ while i < len(words):
             here += 1
         else:
             print("Unimplemented literals > 255")
-        i += 1
+        i += 2
     else:
         print(f"unknown word: {words[i]}")
-        i += 1
+        sys.exit(1)
     image_size = max(image_size, here)
 
 
@@ -91,7 +91,8 @@ print(f"labels: {labels}")
 print(f"refs: {refs}")
 
 for r in refs.keys():
-    write_word(refs[r], labels[r])
+    for a in refs[r]:
+        write_word(a, labels[r])
 
 with open('output.img', 'wb') as f:
     f.write(image)

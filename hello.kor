@@ -1,20 +1,32 @@
 org 10
 
-( ^& load ref )
-( ^&r load relative ref )
+( # literal hex )
+( @ load ref )
+( @r load relative ref )
 ( : define label )
 ( ' byte mode )
 ( '' short mode )
 ( .x raw hex )
 
-&> msg
+# 3f ( '?' )
+@ msg
+# 0c
+add
+store '
+
+@ msg
 : loop
-dup fetch ' dup 0 eq &> end cjmp
-1 trap
-1 add
-&> loop jmp
+  dup
+  fetch '
+  dup
+  # 0
+  eq
+  @ end cjmp
+  # 1 trap
+  # 1 add
+  @ loop jmp
 
 : end
-0 0 trap
+# 0 # 0 trap
 
 : msg " Hello, .x 20 " world! .x a .x 0
