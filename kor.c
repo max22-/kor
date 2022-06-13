@@ -152,7 +152,7 @@ void kor_interrupt(kor *vm, int n)
 
 void kor_exec(kor *vm, u32 limit)
 {
-  u8 opcode = nop, op = nop, operand_size, rel;
+  u8 opcode = op_nop, op = op_nop, operand_size, rel;
   u32 a, b, c;
   i32 sb;
   while(limit--) {
@@ -163,9 +163,9 @@ void kor_exec(kor *vm, u32 limit)
     rel = opcode & 0x80;
     switch(op) {
       
-    case nop:
+    case op_nop:
       break;
-    case lit:
+    case op_lit:
       if(operand_size == mode_byte) {
 	fetch_byte(a, vm->pc);
 	vm->pc++;
@@ -180,28 +180,28 @@ void kor_exec(kor *vm, u32 limit)
       }
       PUSH(a);
       break;
-    case dup:
+    case op_dup:
       POP(a);
       PUSH(a);
       PUSH(a);
       break;
-    case drop:
+    case op_drop:
       POP(a);
       break;
-    case swap:
+    case op_swap:
       POP(b);
       POP(a);
       PUSH(b);
       PUSH(a);
       break;
-    case over:
+    case op_over:
       POP(b);
       POP(a);
       PUSH(a);
       PUSH(b);
       PUSH(a);
       break;
-    case rot:
+    case op_rot:
       POP(c);
       POP(b);
       POP(a);
@@ -209,19 +209,19 @@ void kor_exec(kor *vm, u32 limit)
       PUSH(c);
       PUSH(a);
       break;
-    case nip:
+    case op_nip:
       POP(b);
       POP(a);
       PUSH(b);
       break;
 
-    case call:
+    case op_call:
       RPUSH(vm->pc);
       POP(a);
       if(rel) vm->pc += a;
       else vm->pc = a;
       break;
-    case ccall:
+    case op_ccall:
       POP(b);
       POP(a);
       if(a) {
@@ -230,22 +230,22 @@ void kor_exec(kor *vm, u32 limit)
 	else vm->pc = b;
       }
       break;
-    case ret:
+    case op_ret:
       RPOP(vm->pc);
       break;
-    case cret:
+    case op_cret:
       POP(a);
       if(a) {
 	RPOP(a);
 	vm->pc = a;
       }
       break;
-    case jmp:
+    case op_jmp:
       POP(a);
       if(rel) vm->pc += a;
       else vm->pc = a;
       break;
-    case cjmp:
+    case op_cjmp:
       POP(b);
       POP(a);
       if(a) {
@@ -253,51 +253,51 @@ void kor_exec(kor *vm, u32 limit)
 	else vm->pc = b;
       }
       break;
-    case wtr:
+    case op_wtr:
       POP(a);
       RPUSH(a);
       break;
-    case rtw:
+    case op_rtw:
       RPOP(a);
       PUSH(a);
       break;
       
-    case eq:
+    case op_eq:
       POP(b);
       POP(a);
       PUSH(a == b);
       break;
-    case neq:
+    case op_neq:
       POP(b);
       POP(a);
       PUSH(a != b);
       break;
-    case lt:
+    case op_lt:
       POP(b);
       POP(a);
       PUSH(a < b);
       break;
-    case gt:
+    case op_gt:
       POP(b);
       POP(a);
       PUSH(a > b);
       break;
-    case and:
+    case op_and:
       POP(b);
       POP(a);
       PUSH(a & b);
       break;
-    case or:
+    case op_or:
       POP(b);
       POP(a);
       PUSH(a | b);
       break;
-    case xor:
+    case op_xor:
       POP(b);
       POP(a);
       PUSH(a ^ b);
       break;
-    case shift:
+    case op_shift:
       POP(sb);
       POP(a);
       if(sb >= 0)
@@ -306,29 +306,29 @@ void kor_exec(kor *vm, u32 limit)
 	PUSH(a >> (-sb));
       break;
     
-    case add:
+    case op_add:
       POP(b);
       POP(a);
       PUSH(a + b);
       break;
-    case sub:
+    case op_sub:
       POP(b);
       POP(a);
       PUSH(a - b);
       break;
-    case mul:
+    case op_mul:
       POP(b);
       POP(a);
       PUSH(a * b);
       break;
-    case divmod:
+    case op_divmod:
       POP(b);
       iassert(b != 0, vm, DIV_BY_ZERO);
       POP(a);
       PUSH(a % b);
       PUSH(a / b);
       break;
-    case fetch:
+    case op_fetch:
       POP(a);
       if(rel) a += vm->pc;
       if(operand_size == mode_byte)
@@ -340,7 +340,7 @@ void kor_exec(kor *vm, u32 limit)
       else { kor_interrupt(vm, INVALID_INSTRUCTION); break; }
       PUSH(b);
       break;
-    case store:
+    case op_store:
       POP(b);
       if(rel) b += vm->pc;
       POP(a);
@@ -352,7 +352,7 @@ void kor_exec(kor *vm, u32 limit)
 	store_word(a, b);
       else { kor_interrupt(vm, INVALID_INSTRUCTION); break; }
       break;
-    case sext:
+    case op_sext:
       POP(b);
       if(operand_size == mode_byte) {
 	if(b & 0x80)
@@ -364,7 +364,7 @@ void kor_exec(kor *vm, u32 limit)
       else kor_interrupt(vm, INVALID_INSTRUCTION);
       PUSH(b);
       break;
-    case trap:
+    case op_trap:
       POP(b);
       switch(b) {
       case 0:
