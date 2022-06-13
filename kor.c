@@ -330,6 +330,7 @@ void kor_exec(kor *vm, u32 limit)
       break;
     case fetch:
       POP(a);
+      if(rel) a += vm->pc;
       if(operand_size == mode_byte)
 	fetch_byte(b, a);
       else if(operand_size == mode_short)
@@ -340,7 +341,16 @@ void kor_exec(kor *vm, u32 limit)
       PUSH(b);
       break;
     case store:
-#warning not implemented (oversight...)
+      POP(b);
+      if(rel) b += vm->pc;
+      POP(a);
+      if(operand_size == mode_byte)
+	store_byte(a, b);
+      else if(operand_size == mode_short)
+	store_short(a, b);
+      else if(operand_size == mode_word)
+	store_word(a, b);
+      else { kor_interrupt(vm, INVALID_INSTRUCTION); break; }
       break;
     case sext:
       POP(b);
