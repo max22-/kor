@@ -82,7 +82,7 @@ enum kor_interrupts {
 };
 
 void kor_push(kor*, u32);
-u32 kor_pop();
+u32 kor_pop(kor*);
 void kor_boot(kor*);
 void kor_load_from_mem(kor *, u8 *src, u32 size);
 void kor_interrupt(kor *vm, int n);
